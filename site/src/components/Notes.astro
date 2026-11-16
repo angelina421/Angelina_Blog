@@ -1,0 +1,79 @@
+---
+import { getCollection } from 'astro:content';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import BasePage from './BasePage.astro';
+import { noteOrder, noteTitle, series, type Locale } from '../lib/content';
+
+interface Props { locale: Locale; }
+const { locale } = Astro.props;
+const en = locale === 'en';
+const posts = (await getCollection('posts')).filter((post) => !post.data.draft);
+const translations = (await getCollection('entries')).filter((entry) => entry.data.locale === 'en' && entry.data.kind === 'note' && !entry.data.draft);
+const translated = (id: string) => translations.find((entry) => entry.data.translationKey === id);
+const zhHref = (id: string) => getRelativeLocaleUrl('zh-CN', `posts/${id}`);
+const enHref = (id: string) => getRelativeLocaleUrl('en', `notes/${id.replace(/^en\/notes\//, '')}`);
+const href = (id: string) => en && translated(id) ? enHref(translated(id)!.id) : zhHref(id);
+const title = (post: typeof posts[number]) => en && translated(post.id) ? translated(post.id)!.data.title : noteTitle(post.data.title, locale);
+const updated = (post: typeof posts[number]) => post.data.modDatetime ?? post.data.pubDatetime;
+const date = (post: typeof posts[number]) => new Intl.DateTimeFormat(en ? 'en-US' : 'zh-CN', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'Asia/Shanghai' }).format(updated(post));
+const latest = [...posts].sort((a, b) => updated(b).getTime() - updated(a).getTime() || noteOrder(a.data.title) - noteOrder(b.data.title));
+---
+
+<BasePage title={en ? 'Knowledge · Angelina Blog' : '知识 · Angelina Blog'} description={en ? 'Technical notes in their original order or by latest update.' : '按原有顺序或最近更新时间阅读技术笔记。'}>
+  <div class="notes-wrap">
+    <header class="page-intro"><p class="eyebrow">KNOWLEDGE / {String(posts.length).padStart(2, '0')}</p><h1>{en ? 'Knowledge' : '知识'}</h1><p>{en ? 'The original notes are in Chinese. English translations will be added one by one.' : '把学习和实践中遇到的问题，整理成可以反复翻阅的系列。'}</p></header>
+    <div class="sort-tabs" role="tablist" aria-label={en ? 'Note order' : '笔记顺序'}>
+      <button type="button" role="tab" aria-selected="true" aria-controls="notes-default" id="tab-default" data-notes-sort="default">{en ? 'Original order' : '默认顺序'}</button>
+      <button type="button" role="tab" aria-selected="false" aria-controls="notes-latest" id="tab-latest" data-notes-sort="latest">{en ? 'Latest' : '最新'}</button>
+    </div>
+    <div id="notes-default" role="tabpanel" aria-labelledby="tab-default" data-notes-panel="default">
+      {series.map((item, index) => {
+        const group = posts.filter((post) => post.data.series === item.key).sort((a,b) => noteOrder(a.data.title) - noteOrder(b.data.title));
+        return <section class="series-section" id={`series-${index + 1}`} aria-labelledby={`heading-${index + 1}`}><div class="series-heading"><span>{String(index + 1).padStart(2, '0')} / {String(series.length).padStart(2, '0')}</span><div><h2 id={`heading-${index + 1}`}>{en ? item.en : item.key}</h2><p>{en ? item.descriptionEn : item.descriptionZh}</p></div><small>{group.length} {en ? group.length === 1 ? 'note' : 'notes' : '篇'}</small></div><ul>{group.map((post, postIndex) => <li><a href={href(post.id)}><span class="item-index">{String(postIndex + 1).padStart(2, '0')}</span><span class="item-title">{title(post)}</span><span class="item-meta">{en && !translated(post.id) && <em>中文原文 · </em>}{date(post)} · {post.data.author}</span><span class="arrow" aria-hidden="true">↗</span></a></li>)}</ul></section>;
+      })}
+    </div>
+    <div id="notes-latest" role="tabpanel" aria-labelledby="tab-latest" data-notes-panel="latest" hidden>
+      <p class="sort-help">{en ? 'Sorted by each note’s recorded update date.' : '按每篇笔记记录的更新时间排列。'}</p>
+      <ul class="latest-list">{latest.map((post, index) => <li><a href={href(post.id)}><span class="item-index">{String(index + 1).padStart(2, '0')}</span><span class="item-title">{title(post)}</span><span class="item-meta">{date(post)} · {post.data.author}</span><span class="arrow" aria-hidden="true">↗</span></a></li>)}</ul>
+    </div>
+  </div>
+</BasePage>
+
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>('[data-notes-sort]');
+  const panels = document.querySelectorAll<HTMLElement>('[data-notes-panel]');
+  buttons.forEach((button) => button.addEventListener('click', () => {
+    const selected = button.dataset.notesSort;
+    buttons.forEach((item) => item.setAttribute('aria-selected', String(item === button)));
+    panels.forEach((panel) => { panel.hidden = panel.dataset.notesPanel !== selected; });
+  }));
+</script>
+
+<style>
+  .notes-wrap { max-width: 62rem; margin-inline: auto; }
+  .page-intro { margin-bottom: 2.5rem; max-width: 45rem; }
+  .eyebrow,.series-heading>span,.series-heading small,.item-index,.item-meta { font-family:var(--font-mono); color:var(--fg-muted); font-size:.72rem; letter-spacing:.03em; }
+  h1,h2,p { margin:0; }
+  h1 { font-size:clamp(2.8rem,5.5vw,4.7rem); letter-spacing:-.05em; line-height:1.1; margin-block:1.4rem; }
+  .page-intro>p:last-child { font-size:1.12rem; line-height:1.8; color:var(--fg-muted); }
+  .sort-tabs { display:flex; gap:.4rem; border-bottom:1px solid var(--border); margin-bottom:2rem; }
+  .sort-tabs button { border:0; border-bottom:2px solid transparent; background:transparent; color:var(--fg-muted); padding:.75rem 1rem; cursor:pointer; font:inherit; font-size:.9rem; }
+  .sort-tabs button:hover,.sort-tabs button[aria-selected="true"] { color:var(--fg); }
+  .sort-tabs button[aria-selected="true"] { border-bottom-color:var(--accent); }
+  [hidden] { display:none !important; }
+  .series-section { border-top:1px solid var(--border); padding-block:2.3rem 3.4rem; scroll-margin-top:5rem; }
+  .series-heading { display:grid; grid-template-columns:3rem 1fr auto; align-items:start; gap:1rem; margin-bottom:1.4rem; }
+  h2 { font-size:1.75rem; letter-spacing:-.025em; line-height:1.25; }
+  .series-heading p { color:var(--fg-muted); font-size:.9rem; margin-top:.35rem; }
+  ul { list-style:none; padding:0; margin:0 0 0 4rem; }
+  li a { display:grid; grid-template-columns:2rem minmax(0,1fr) auto 1rem; align-items:baseline; gap:1rem; padding:.85rem 0; border-bottom:1px solid var(--border); }
+  li a:hover .item-title { color:var(--accent); }
+  .item-title { font-size:1.05rem; }
+  .item-meta { white-space:nowrap; }
+  .item-meta em { font-style:normal; }
+  .arrow { color:var(--accent); }
+  .sort-help { color:var(--fg-muted); font-size:.85rem; margin-bottom:1.5rem; }
+  .latest-list { margin-left:0; }
+  @media (max-width:760px) { .series-heading { grid-template-columns:2.4rem 1fr auto; } ul { margin-left:0; } li a { grid-template-columns:1.6rem 1fr 1rem; gap:.65rem; } .item-meta { grid-column:2; white-space:normal; } .arrow { grid-column:3; grid-row:1; } }
+  @media (max-width:500px) { .item-index { display:none; } li a { grid-template-columns:1fr 1rem; } .item-meta { grid-column:1; } .arrow { grid-column:2; } }
+</style>

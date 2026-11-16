@@ -1,0 +1,105 @@
+---
+import { getCollection } from 'astro:content';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import BasePage from './BasePage.astro';
+import { series, type Locale } from '../lib/content';
+
+interface Props { locale: Locale; }
+const { locale } = Astro.props;
+const en = locale === 'en';
+const posts = (await getCollection('posts')).filter((post) => !post.data.draft);
+const entries = (await getCollection('entries')).filter((entry) => entry.data.locale === locale && !entry.data.draft);
+const projects = entries.filter((entry) => entry.data.kind === 'project');
+const essays = entries.filter((entry) => entry.data.kind === 'essay');
+const url = (path: string) => getRelativeLocaleUrl(locale, path);
+const image = (name: string) => `${import.meta.env.BASE_URL}images/${name}.jpg`;
+const title = en ? 'Angelina Blog · Knowledge, projects, and essays' : 'Angelina Blog · 知识、工程与随笔';
+const description = en ? 'A personal space for knowledge, experiments, and reflection.' : '一个记录知识、工程实践与思考的个人空间。';
+const sections = [
+  {
+    number: '01', label: 'ABOUT', path: 'about', heading: en ? 'About' : '关于', image: 'open-books',
+    alt: en ? 'Books open in warm light' : '光线中的打开的书',
+    intro: en ? 'A quiet home for useful knowledge and unfinished ideas.' : '为有用的知识和未完成的想法，留一个安静的位置。',
+    detail: en ? 'A little about this blog and the person behind it.' : '关于这个 Blog，以及写下这些内容的人。',
+    action: en ? 'Read about this blog' : '了解这个 Blog',
+  },
+  {
+    number: '02', label: 'KNOWLEDGE', path: 'notes', heading: en ? 'Knowledge' : '知识', image: 'linux-terminal',
+    alt: en ? 'Laptop showing a terminal' : '显示终端界面的笔记本电脑',
+    intro: en ? 'Getting started with Linux, one practical step at a time.' : '从安装环境开始，一步步认识 Linux 的命令行、文件系统与网络。',
+    detail: en ? `${posts.length} notes · ${series.length} series` : `${posts.length} 篇笔记 · ${series.length} 个系列`,
+    action: en ? 'Explore Linux basics' : '阅读 Linux 入门',
+  },
+  {
+    number: '03', label: 'PROJECTS', path: 'projects', heading: en ? 'Projects' : '工程', image: 'stairs',
+    alt: en ? 'Concrete stairway and curves' : '混凝土阶梯与曲线',
+    intro: en ? 'Small tools and experiments built to answer real questions.' : '从真实问题出发，做一些小工具、实验与系统。',
+    detail: projects.length ? en ? `${projects.length} projects` : `${projects.length} 个项目` : en ? 'Projects will appear here' : '项目会陆续记录在这里',
+    action: en ? 'View projects' : '查看工程',
+  },
+  {
+    number: '04', label: 'ESSAYS', path: 'essays', heading: en ? 'Essays' : '随笔', image: 'notebook',
+    alt: en ? 'Coffee and an open notebook' : '桌上的咖啡与笔记本',
+    intro: en ? 'Reflections on learning, making, and the ideas that stay with me.' : '关于学习、创造，以及那些会留在心里的想法。',
+    detail: essays.length ? en ? `${essays.length} essays` : `${essays.length} 篇随笔` : en ? 'New writing will appear here' : '随笔会陆续写在这里',
+    action: en ? 'Read essays' : '阅读随笔',
+  },
+];
+---
+
+<BasePage {title} {description}>
+  <div class="home-wrap">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">ANGELINA BLOG <span>/ 001</span></p>
+        <h1 id="hero-title">{en ? 'A place to think in public.' : <>把好奇，<br />写成自己的路。</>}</h1>
+        <p class="lede">{en ? 'Knowledge from learning, projects from doing, and essays from thinking. A growing record of what feels worth keeping.' : '记录学习时的答案，工程中的尝试，以及那些值得慢慢想清楚的问题。'}</p>
+        <div class="hero-actions"><a class="primary-link" href={url('notes')}>{en ? 'Explore Linux basics' : '阅读 Linux 入门'} <span aria-hidden="true">↗</span></a><a class="quiet-link" href={url('about')}>{en ? 'About this blog' : '关于这个 Blog'} <span aria-hidden="true">→</span></a></div>
+        <div class="hero-meta"><span>{posts.length.toString().padStart(2, '0')} {en ? 'notes' : '篇笔记'}</span><span>{series.length.toString().padStart(2, '0')} {en ? 'series' : '个系列'}</span><span>CN / EN</span></div>
+      </div>
+      <figure class="hero-photo"><img src={image('architecture')} alt={en ? 'Architectural lines in light and shadow' : '光影中的建筑线条'} width="1400" height="933" fetchpriority="high" /></figure>
+    </section>
+
+    {sections.map((item) => <section class="section" aria-labelledby={`${item.path}-heading`}>
+      <div class="section-head"><span class="section-index">{item.number} / {item.label}</span><h2 id={`${item.path}-heading`}>{item.heading}</h2></div>
+      <div class="feature-row">
+        <a class="feature-image-link" href={url(item.path)} aria-label={item.action}><img class="feature-photo" src={image(item.image)} alt={item.alt} width="1400" height="933" loading="lazy" /></a>
+        <div class="feature-copy"><p>{item.intro}</p><span class="detail">{item.detail}</span></div>
+        <a class="feature-link" href={url(item.path)}>{item.action} ↗</a>
+      </div>
+    </section>)}
+  </div>
+</BasePage>
+
+<style>
+  .home-wrap { max-width:69rem; margin-inline:auto; }
+  .hero { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(15rem,.8fr); align-items:center; gap:clamp(2rem,5vw,5rem); padding-block:2rem 6rem; }
+  .hero-copy { min-width:0; }
+  .hero-photo { margin:0; height:clamp(20rem,38vw,31rem); overflow:hidden; border-radius:.3rem; }
+  .hero-photo img,.feature-photo { display:block; width:100%; height:100%; object-fit:cover; }
+  .hero-photo img { filter:saturate(.7); transition:transform .7s ease; }
+  .hero-photo:hover img { transform:scale(1.035); }
+  .eyebrow,.section-index,.detail,.hero-meta { font-family:var(--font-mono); font-size:.74rem; letter-spacing:.08em; color:var(--fg-muted); }
+  .eyebrow span { color:var(--accent); margin-left:1rem; }
+  h1,h2,p { margin:0; }
+  h1 { font-size:clamp(3rem,5vw,4.5rem); line-height:1.08; letter-spacing:-.055em; font-weight:600; margin-block:1.5rem 1.8rem; }
+  .lede { font-size:clamp(1.15rem,2vw,1.45rem); line-height:1.72; max-width:37rem; color:var(--fg-muted); }
+  .hero-actions { display:flex; align-items:center; flex-wrap:wrap; gap:1.7rem; margin-top:2.5rem; }
+  .primary-link { display:inline-flex; gap:2.5rem; align-items:center; background:var(--fg); color:var(--bg); padding:.9rem 1.2rem; border-radius:.25rem; font-size:.9rem; }
+  .primary-link:hover { background:var(--accent); }
+  .quiet-link,.feature-link { color:var(--accent); text-decoration:underline; text-underline-offset:.28em; }
+  .hero-meta { display:flex; flex-wrap:wrap; gap:2rem; border-top:1px solid var(--border); margin-top:4.5rem; padding-top:1rem; }
+  .section { border-top:1px solid var(--border); padding-block:3.2rem 3.8rem; }
+  .section-head { display:flex; align-items:baseline; gap:1.5rem; margin-bottom:2rem; }
+  .section-head h2 { font-size:clamp(1.9rem,3.5vw,3.2rem); line-height:1.2; letter-spacing:-.03em; font-weight:600; }
+  .feature-row { display:grid; grid-template-columns:15rem minmax(0,1fr) auto; align-items:center; gap:2.2rem; }
+  .feature-image-link { display:block; height:10rem; overflow:hidden; border-radius:.3rem; }
+  .feature-photo { filter:saturate(.75); transition:transform .45s ease; }
+  .feature-image-link:hover .feature-photo { transform:scale(1.045); }
+  .feature-copy p { font-size:1.1rem; line-height:1.7; max-width:32rem; }
+  .detail { display:inline-block; margin-top:.6rem; }
+  .feature-link { white-space:nowrap; }
+  @media (max-width:800px) { .hero { grid-template-columns:1fr; } .hero-photo { height:17rem; } .feature-row { grid-template-columns:11rem 1fr; } .feature-link { grid-column:2; } }
+  @media (max-width:620px) { .hero { padding-block:1rem 4rem; gap:2rem; } .section { padding-block:2.6rem 3rem; } .section-head { display:block; } .section-head h2 { margin-top:.65rem; } .feature-row { grid-template-columns:6.5rem 1fr; gap:1rem; } .feature-image-link { height:6.5rem; } .feature-copy p { font-size:1rem; } .feature-link { grid-column:2; } }
+  @media (prefers-reduced-motion:no-preference) { .hero,.section { animation:appear .65s ease both; } @keyframes appear { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } } }
+</style>

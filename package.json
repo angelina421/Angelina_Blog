@@ -1,0 +1,11 @@
+{
+  "name": "angelina-blog",
+  "private": true,
+  "type": "module",
+  "workspaces": ["site", "theme"],
+  "scripts": {
+    "dev": "npm --workspace site run dev",
+    "build": "npm --workspace site run build",
+    "check": "npm --workspace site run check:links"
+  }
+}

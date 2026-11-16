@@ -1,0 +1,31 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import PostLayout from 'astro-sage/layouts/PostLayout.astro';
+import Header from 'astro-sage/components/Header.astro';
+import Main from 'astro-sage/components/Main.astro';
+import Footer from 'astro-sage/components/Footer.astro';
+
+interface Props { entry: CollectionEntry<'entries'>; }
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const section = entry.data.kind === 'project' ? 'projects' : entry.data.kind === 'essay' ? 'essays' : 'notes';
+const sectionLabel = entry.data.locale === 'en' ? { projects: 'Projects', essays: 'Essays', notes: 'Notes' }[section] : { projects: '工程', essays: '随笔', notes: '笔记' }[section];
+const updated = entry.data.modDatetime ?? entry.data.pubDatetime;
+const updatedLabel = updated && new Intl.DateTimeFormat(entry.data.locale === 'en' ? 'en-US' : 'zh-CN', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Shanghai' }).format(updated);
+---
+
+<PostLayout title={`${entry.data.title} · Angelina Blog`} description={entry.data.description} pubDatetime={entry.data.pubDatetime} modDatetime={entry.data.modDatetime}>
+  <Header />
+  <Main pageTitle={entry.data.title} pageDesc={entry.data.description}>
+    <a class="back-link" href={getRelativeLocaleUrl(entry.data.locale, section)}>← {sectionLabel}</a>
+    <p class="entry-meta">{updated && <span>{entry.data.locale === 'en' ? 'Updated' : '更新于'} <time datetime={updated.toISOString()}>{updatedLabel}</time></span>}<span>{entry.data.locale === 'en' ? 'By' : '作者'} {entry.data.author}</span></p>
+    <article class="app-prose mt-8" data-pagefind-body><Content /></article>
+  </Main>
+  <Footer />
+</PostLayout>
+
+<style>
+  .back-link { color:var(--accent); font-family:var(--font-mono); font-size:.78rem; }
+  .entry-meta { display:flex; flex-wrap:wrap; gap:1rem; margin-top:1rem; color:var(--fg-muted); font-size:.85rem; }
+</style>

@@ -1,0 +1,40 @@
+---
+import { getCollection } from 'astro:content';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import BasePage from './BasePage.astro';
+import type { Locale } from '../lib/content';
+
+interface Props { locale: Locale; kind: 'project' | 'essay'; }
+const { locale, kind } = Astro.props;
+const en = locale === 'en';
+const projects = kind === 'project';
+const heading = projects ? (en ? 'Projects' : '工程') : (en ? 'Essays' : '随笔');
+const intro = projects ? (en ? 'Things I built, tested, and learned from.' : '记录从问题出发、动手实现的工程与实验。') : (en ? 'Ideas worth returning to, written down along the way.' : '记录学习、创造与生活中值得反复思考的片段。');
+const entries = (await getCollection('entries')).filter((entry) => entry.data.locale === locale && entry.data.kind === kind && !entry.data.draft).sort((a,b) => (b.data.pubDatetime?.getTime() ?? 0) - (a.data.pubDatetime?.getTime() ?? 0));
+const path = projects ? 'projects' : 'essays';
+---
+
+<BasePage title={`${heading} · Angelina Blog`} description={intro}>
+  <div class="collection-wrap"><header class="page-intro"><p class="eyebrow">{projects ? 'PROJECTS' : 'ESSAYS'} / {String(entries.length).padStart(2, '0')}</p><h1>{heading}</h1><p>{intro}</p></header>
+    {entries.length ? <ul>{entries.map((entry,index) => <li><a href={getRelativeLocaleUrl(locale, `${path}/${entry.id.split('/').slice(2).join('/')}`)}><span class="item-index">{String(index + 1).padStart(2, '0')}</span><div><h2>{entry.data.title}</h2><p>{entry.data.description}</p></div><span class="arrow" aria-hidden="true">↗</span></a></li>)}</ul> : <div class="empty-state"><span class="empty-mark" aria-hidden="true">✳</span><h2>{en ? 'The first entry is on its way.' : '第一篇，正在酝酿。'}</h2><p>{en ? 'This section is ready for new writing. Check back as the collection grows.' : '栏目已经准备好，会随着新的实践与思考慢慢充实。'}</p></div>}
+  </div>
+</BasePage>
+
+<style>
+  .collection-wrap { max-width:57rem; margin-inline:auto; }
+  .page-intro { margin-bottom:4rem; }
+  .eyebrow,.item-index { color:var(--fg-muted); font-family:var(--font-mono); font-size:.75rem; letter-spacing:.08em; }
+  h1,h2,p { margin:0; }
+  h1 { font-size:clamp(2.8rem,5.5vw,4.7rem); letter-spacing:-.05em; line-height:1.1; margin-block:1.4rem; }
+  .page-intro>p:last-child { color:var(--fg-muted); font-size:1.12rem; line-height:1.8; }
+  ul { list-style:none; margin:0; padding:0; border-top:1px solid var(--border); }
+  li a { display:grid; grid-template-columns:3rem 1fr auto; gap:1rem; padding:1.6rem 0; border-bottom:1px solid var(--border); }
+  li h2 { font-size:1.4rem; line-height:1.35; }
+  li p { color:var(--fg-muted); margin-top:.4rem; line-height:1.6; }
+  li a:hover h2,.arrow { color:var(--accent); }
+  .empty-state { min-height:18rem; border:1px solid var(--border); border-radius:.35rem; padding:3rem; display:flex; flex-direction:column; align-items:start; justify-content:center; background:var(--bg-raised); }
+  .empty-mark { color:var(--accent); font-size:2rem; margin-bottom:1.5rem; }
+  .empty-state h2 { font-size:1.65rem; }
+  .empty-state p { color:var(--fg-muted); line-height:1.7; margin-top:.6rem; }
+  @media(max-width:600px) { li a { grid-template-columns:1fr auto; } .item-index { display:none; } .empty-state { padding:2rem; } }
+</style>

@@ -1,0 +1,7 @@
+---
+import EntryArticle from '../../components/EntryArticle.astro';
+import { entryPaths } from '../../lib/entries';
+export const getStaticPaths = () => entryPaths('zh-CN', 'essay');
+const { entry } = Astro.props;
+---
+<EntryArticle {entry} />

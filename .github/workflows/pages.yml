@@ -1,0 +1,45 @@
+name: Publish blog to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Configure GitHub Pages URL
+        shell: bash
+        run: |
+          echo "BLOG_SITE_URL=https://${GITHUB_REPOSITORY_OWNER}.github.io/" >> "$GITHUB_ENV"
+          if [[ "${GITHUB_REPOSITORY#*/}" == "${GITHUB_REPOSITORY_OWNER}.github.io" ]]; then
+            echo "BLOG_BASE_PATH=/" >> "$GITHUB_ENV"
+          else
+            echo "BLOG_BASE_PATH=/${GITHUB_REPOSITORY#*/}" >> "$GITHUB_ENV"
+          fi
+      - run: npm run build
+      - run: npm run check
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site/dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

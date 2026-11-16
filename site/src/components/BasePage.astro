@@ -1,0 +1,18 @@
+---
+import Layout from 'astro-sage/layouts/Layout.astro';
+import Header from 'astro-sage/components/Header.astro';
+import Footer from 'astro-sage/components/Footer.astro';
+
+interface Props { title: string; description: string; }
+const { title, description } = Astro.props;
+---
+
+<Layout {title} {description}>
+  <Header />
+  <main id="main-content" class="app-layout blog-main"><slot /></main>
+  <Footer />
+</Layout>
+
+<style>
+  .blog-main { padding-block: clamp(2.5rem, 6vw, 5rem) 6rem; }
+</style>
