@@ -12,7 +12,7 @@ const entries = (await getCollection('entries')).filter((entry) => entry.data.lo
 const projects = entries.filter((entry) => entry.data.kind === 'project');
 const essays = entries.filter((entry) => entry.data.kind === 'essay');
 const url = (path: string) => getRelativeLocaleUrl(locale, path);
-const image = (name: string) => `${import.meta.env.BASE_URL}images/${name}.jpg`;
+const image = (name: string) => `${import.meta.env.BASE_URL.replace(/\/$/, '')}/images/${name}.jpg`;
 const title = en ? 'Angelina Blog · Knowledge, projects, and essays' : 'Angelina Blog · 知识、工程与随笔';
 const description = en ? 'A personal space for knowledge, experiments, and reflection.' : '一个记录知识、工程实践与思考的个人空间。';
 const sections = [
