@@ -20,15 +20,12 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
+     
       - name: Configure GitHub Pages URL
         shell: bash
         run: |
-          echo "BLOG_SITE_URL=https://${GITHUB_REPOSITORY_OWNER}.github.io/" >> "$GITHUB_ENV"
-          if [[ "${GITHUB_REPOSITORY#*/}" == "${GITHUB_REPOSITORY_OWNER}.github.io" ]]; then
-            echo "BLOG_BASE_PATH=/" >> "$GITHUB_ENV"
-          else
-            echo "BLOG_BASE_PATH=/${GITHUB_REPOSITORY#*/}" >> "$GITHUB_ENV"
-          fi
+          echo "BLOG_SITE_URL=https://blog.angelina.dpdns.org/" >> "$GITHUB_ENV"
+          echo "BLOG_BASE_PATH=/" >> "$GITHUB_ENV"
       - run: npm run build
       - run: npm run check
       - uses: actions/upload-pages-artifact@v5
