@@ -54,7 +54,7 @@ npm run check
 2. 在仓库的 **Settings → Pages → Build and deployment → Source** 中选择 **GitHub Actions**。
 3. 推送后，仓库中的 [发布工作流](.github/workflows/pages.yml) 会构建、检查并发布网站。它会根据仓库名称自动处理 GitHub Pages 的网址路径。
 
-发布时，页脚的 GitHub 链接会自动指向当前仓库。本地预览如需显示该链接，可设置 `BLOG_GITHUB_URL`。使用其他托管服务时，可通过 `BLOG_SITE_URL` 设置网站网址；若网站位于子路径，再设置 `BLOG_BASE_PATH`。站点的其他信息在 [配置文件](site/sage.config.ts) 中修改。
+博客使用 GitHub Pages 提供的默认网址。普通项目仓库发布后的地址为 `https://用户名.github.io/仓库名/`。发布成功后，可以在仓库的 **Settings → Pages** 查看实际网址。博客页脚的 GitHub 链接会指向源码仓库。
 
 ## 图片与主题
 
